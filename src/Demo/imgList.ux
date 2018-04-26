@@ -1,0 +1,94 @@
+<template>
+    <!-- 列表实现，监听列表的scrollbottom事件，列表滚动到底部时加载更多数据 -->
+    <list class="tutorial-page" onscrollbottom="renderMoreListItem">
+        <!-- 商品列表 -->
+        <block for="productList">
+            <list-item type="product" class="content-item">
+                <div class="item">
+                    <image class="image" src="{{$item.url}}"></image>
+                </div>
+            </list-item>
+        </block>
+
+        <list-item type="loadStatus" class="load-status">
+            <progress type="circular" show="{{hasMoreData}}"></progress>
+            <text show="{{hasMoreData}}">加载更多</text>
+            <text show="{{!hasMoreData}}">没有更多了~</text>
+        </list-item>
+    </list>
+</template>
+
+<script>
+  import router from '@system.router'
+  import fetch from '@system.fetch'
+  export default {
+    data: {
+      productList: [],
+      hasMoreData: true,
+      // 每次渲染的商品数
+      page: 1,
+      // 是否正在fetch请求数据
+      isLoadingData: false
+    },
+    onInit() {
+      // 获取数据并渲染列表
+      this.getInitData()
+    },
+    /**
+     * 请求并渲染
+     */
+    getInitData() {
+      this.isLoadingData = true
+      var self = this
+      fetch.fetch({
+        url: 'https://www.apiopen.top/meituApi?page=' + self.page,
+        method: 'get',
+        success(res) {
+          self.isLoadingData = false
+          self.hasMoreData = false
+          var d = JSON.parse(res.data)
+          console.log(d)
+          if (d.code == '200') {
+            console.log('状态成功')
+            var dd = d.data
+            for (var item in dd) {
+              self.productList.push(dd[item])
+            }
+          }
+        },
+        fail() {
+          console.log('失败')
+        }
+      })
+    },
+
+    /**
+     * 滑动到底部时加载更多
+     */
+    renderMoreListItem() {
+      if (!this.isLoadingData) {
+        this.page++
+        this.getInitData()
+      }
+    }
+  }
+</script>
+<style>
+    .content-item{
+        padding: 10px 10px;
+    }
+    .item {
+        width: 100%;
+        padding: 20px;
+        background-color: #ffd100;
+        color: #000000;
+    }
+
+    .image {
+        width: 100%;
+    }
+    .loading{
+        text-align: center;
+        color: #74e3ff;
+    }
+</style>
